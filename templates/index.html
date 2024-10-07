@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mental Health Sentiment Analysis</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Mental Health Sentiment Analysis</h1>
+      <form action="/predict" method="POST">
+        <label for="comment">Enter a comment:</label>
+        <textarea
+          id="comment"
+          name="comment"
+          rows="4"
+          cols="50"
+          required
+        ></textarea>
+        <br /><br />
+        <input type="submit" value="Analyze" />
+      </form>
+
+      {% if prediction %}
+      <h3>Entered Comment: "{{ comment }}"</h3>
+      <h3>Predicted Mental Health Condition: {{ prediction }}</h3>
+      <h3>Model Accuracy on Validation Data: {{ accuracy }}</h3>
+      {% endif %}
+    </div>
+  </body>
+</html>
