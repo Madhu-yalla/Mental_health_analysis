@@ -5,10 +5,13 @@ from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
+from sklearn.preprocessing import label_binarize
 import nltk
 import seaborn as sns
 import matplotlib.pyplot as plt
+from wordcloud import WordCloud
 import time
+from sklearn.metrics import roc_curve, auc
 
 nltk.download('stopwords')
 from nltk.corpus import stopwords
@@ -33,6 +36,25 @@ def preprocess_text(text):
     stop_words = set(stopwords.words('english'))
     return ' '.join([word for word in text.split() if word not in stop_words])
 
+# Function to plot the distribution of target classes
+def plot_target_distribution(y):
+    sns.countplot(x=y)
+    plt.title('Distribution of Mental Health Conditions')
+    plt.xlabel('Condition')
+    plt.ylabel('Count')
+    plt.savefig('target_distribution.png')
+    plt.close()
+
+# Function to generate a word cloud for each condition
+def generate_word_cloud(text_data, condition_label):
+    wordcloud = WordCloud(width=800, height=400).generate(" ".join(text_data))
+    plt.figure(figsize=(10, 5))
+    plt.imshow(wordcloud, interpolation='bilinear')
+    plt.title(f'Word Cloud for {condition_label}')
+    plt.axis('off')
+    plt.savefig(f'wordcloud_{condition_label}.png')
+    plt.close()
+
 # Load and preprocess the dataset
 def load_and_preprocess_data():
     print("Loading and preprocessing data...")
@@ -47,13 +69,35 @@ def load_and_preprocess_data():
     # Preprocess the text column
     data['cleaned_text'] = data['text'].apply(preprocess_text)
 
-    # Extract features and labels (replace 'target' with your actual label column)
+    # Extract features and labels
     X = data['cleaned_text']
     y = data['target'] 
+
+    # Plot distribution of target classes
+    plot_target_distribution(y)
+
+    # Generate word clouds for each class
+    for label in label_mapping.keys():
+        condition_texts = data[data['target'] == label]['cleaned_text']
+        generate_word_cloud(condition_texts, label_mapping[label])
 
     end_time = time.time()
     print(f"Data loading and preprocessing completed. Time taken: {end_time - start_time:.2f} seconds.")
     return X, y
+
+# Function to plot top TF-IDF features
+def plot_top_tfidf_features(tfidf_vectorizer, model, n_top_words=20):
+    feature_names = tfidf_vectorizer.get_feature_names() 
+    coefs_with_fns = sorted(zip(model.coef_[0], feature_names))
+    top_features = coefs_with_fns[-n_top_words:]
+    
+    plt.figure(figsize=(10, 5))
+    plt.barh([fn for coef, fn in top_features], [coef for coef, fn in top_features])
+    plt.title('Top Features Based on TF-IDF Scores')
+    plt.xlabel('Feature Importance (Coefficient)')
+    plt.ylabel('Feature (Word)')
+    plt.savefig('top_tfidf_features.png')
+    plt.close()
 
 # Train and validate the machine learning model
 def train_and_validate_model():
@@ -83,7 +127,10 @@ def train_and_validate_model():
     print("Accuracy on validation data:", accuracy)
     print("Classification Report:\n", classification_report(y_test, y_pred))
 
-    # plot confusion matrix to see how well the model performs
+    # Plot top TF-IDF features
+    plot_top_tfidf_features(tfidf, model)
+
+    # Plot confusion matrix to see how well the model performs
     print("Plotting confusion matrix...")
     cm = confusion_matrix(y_test, y_pred)
     sns.heatmap(cm, annot=True, cmap='Blues', fmt='g')
@@ -132,4 +179,3 @@ def index():
 if __name__ == "__main__":
     print("Starting Flask app...")
     app.run(debug=True, host='0.0.0.0', port=8080)
-
