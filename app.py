@@ -164,8 +164,8 @@ def predict():
         max_prob = max(probabilities)  # Get the highest probability
         predicted_condition_numeric = model.predict(vectorized_text)[0]  # Get the predicted class
         
-        # Set a confidence threshold, e.g., 50%
-        confidence_threshold = 0.5
+        # Set a confidence threshold
+        confidence_threshold = 0.3
 
         if max_prob < confidence_threshold:
             predicted_condition = "Normal Health Condition / Irrelevant Data"
@@ -187,3 +187,4 @@ def index():
 if __name__ == "__main__":
     print("Starting Flask app...")
     app.run(debug=True, host='0.0.0.0', port=8080)
+
